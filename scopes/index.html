@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>Scopes</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/scopes.css" />
+</head>
+<body>
+  <div id="app" class="app scopes">
+    <header class="top-bar">
+      <div class="comp-chip" id="comp-chip">
+        <span class="status-dot" id="status-dot" data-state="idle" aria-hidden="true"></span>
+        <span class="comp-chip__label" id="comp-label">Waiting for After Effects…</span>
+      </div>
+      <div class="top-bar__actions">
+        <button type="button" id="roi-chip" class="btn btn--sm btn--accent" data-action="roi-clear" hidden title="Region of interest - click to clear">
+          <span class="btn__label" id="roi-label">ROI</span>
+          <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" /></svg>
+        </button>
+        <button type="button" id="btn-refresh" class="btn btn--icon" data-action="refresh" aria-label="Refresh now" title="Refresh now">
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M10 6a4 4 0 1 1-1.2-2.85" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+            <path d="M9.4 1v2.4H7" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <div class="settings">
+          <button type="button" id="btn-settings" class="btn btn--icon settings__trigger" aria-label="Settings" aria-haspopup="menu" aria-expanded="false" aria-controls="settings-menu">
+            <svg class="settings__icon" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+              <path fill="currentColor" d="M6.8 1.2 6.5 2.3l-.9.3-.8-.5-.9.9.5.8-.3.9-1.1.3v1.2l1.1.3.3.9-.5.8.9.9.8-.5.9.3.3 1.1h1.2l.3-1.1.9-.3.8.5.9-.9-.5-.8.3-.9 1.1-.3V4.8l-1.1-.3-.3-.9.5-.8-.9-.9-.8.5-.9-.3L7.8 1.2H6.8zM6 4.3a1.7 1.7 0 1 1 0 3.4 1.7 1.7 0 0 1 0-3.4z" />
+            </svg>
+          </button>
+          <div class="settings-menu" id="settings-menu" role="menu" hidden>
+            <button type="button" class="settings-menu__item" role="menuitemradio" aria-checked="true" data-action="mode" data-mode="auto">Update: Automatic</button>
+            <button type="button" class="settings-menu__item" role="menuitemradio" aria-checked="false" data-action="mode" data-mode="live">Update: Live (continuous)</button>
+            <button type="button" class="settings-menu__item" role="menuitemradio" aria-checked="false" data-action="mode" data-mode="manual">Update: Manual</button>
+            <div class="settings-menu__sep" role="separator"></div>
+            <button type="button" class="settings-menu__item" role="menuitem" data-action="refresh">Refresh Now</button>
+            <button type="button" class="settings-menu__item" role="menuitem" data-action="open-color">Color Pipeline…</button>
+            <button type="button" class="settings-menu__item" role="menuitem" data-action="open-settings">Scope Settings…</button>
+            <div class="settings-menu__sep" role="separator"></div>
+            <button type="button" class="settings-menu__item" role="menuitem" data-action="view-reset-all">Reset Zoom &amp; Position</button>
+            <button type="button" class="settings-menu__item" role="menuitem" data-action="roi-clear">Clear Region of Interest</button>
+            <button type="button" class="settings-menu__item" role="menuitem" data-action="reset-layout">Reset Layout</button>
+            <button type="button" class="settings-menu__item" role="menuitem" data-action="copy-info">Copy Frame Info</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <button type="button" class="badge" id="pipeline-badge" data-action="open-color" title="Colour pipeline - click to change">
+      <span class="badge__text" id="badge-text">Colour pipeline: waiting…</span>
+      <span class="badge__flag badge__flag--hdr" id="badge-hdr" hidden>HDR</span>
+      <span class="badge__flag" id="badge-note" hidden>!</span>
+    </button>
+
+    <main class="grid" id="grid" aria-label="Scopes"></main>
+
+    <footer class="info" id="info" aria-label="Colour information"></footer>
+
+    <div id="notification-toast" class="notification-toast" hidden role="status" aria-live="polite" aria-atomic="true">
+      <span class="notification-toast__message"></span>
+    </div>
+  </div>
+
+  <!-- floating menu used by every scope cell's title -->
+  <div class="settings-menu cell-menu" id="cell-menu" role="menu" hidden></div>
+
+  <div class="modal" id="modal" hidden aria-hidden="true">
+    <div class="modal__backdrop" data-action="modal-close"></div>
+    <div class="modal__dialog" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+      <header class="modal__header"><h2 id="modal-title" class="modal__title">Scopes</h2></header>
+      <div class="modal__body" id="modal-body">
+
+        <div class="modal__section" id="sec-color">Colour pipeline</div>
+        <p class="pipeline-label" id="pipeline-label">—</p>
+        <p class="notes" id="pipeline-notes" hidden></p>
+
+        <label class="field field--row"><span class="field__label">Scope colour space</span>
+          <select id="opt-space" class="field__input field__select"><option value="rec709">Rec. 709</option><option value="rec2020">Rec. 2020</option><option value="rec601">Rec. 601</option></select></label>
+        <label class="field field--row"><span class="field__label">Display transfer</span>
+          <select id="opt-transfer" class="field__input field__select"><option value="auto">Automatic</option><option value="srgb">sRGB</option><option value="g24">Gamma 2.4 (BT.1886)</option><option value="g22">Gamma 2.2</option><option value="rec709">BT.709 OETF</option></select></label>
+        <label class="field field--row"><span class="field__label">Values</span>
+          <select id="opt-scale" class="field__input field__select"><option value="display">As seen (display)</option><option value="working">Raw working values</option></select></label>
+        <label class="field field--row"><span class="field__label">Vertical range</span>
+          <select id="opt-range" class="field__input field__select"><option value="auto">Automatic</option><option value="1">0 – 100%</option><option value="2">0 – 200%</option><option value="4">0 – 400%</option></select></label>
+        <label class="field field--row" id="row-ocio-work" hidden><span class="field__label">OCIO working space</span>
+          <select id="opt-ocio-work" class="field__input field__select"><option value="auto">From config</option><option value="acescg">ACEScg</option><option value="linear709">Linear Rec.709</option><option value="linear2020">Linear Rec.2020</option><option value="linearp3">Linear P3</option><option value="aces2065">ACES 2065-1</option></select></label>
+        <label class="field field--row" id="row-ocio-view" hidden><span class="field__label">OCIO view transform</span>
+          <select id="opt-ocio-view" class="field__input field__select"><option value="srgb">sRGB / Rec.709</option><option value="aces">ACES SDR (approx.)</option><option value="raw">Raw (no transform)</option></select></label>
+
+        <div class="modal__section" id="sec-display">Display</div>
+        <label class="field field--row"><span class="field__label">Layout</span>
+          <select id="opt-layout" class="field__input field__select"><option value="auto">Automatic</option><option value="1">1 scope</option><option value="2h">2 side by side</option><option value="2v">2 stacked</option><option value="4">4 scopes</option></select></label>
+        <label class="field field--row"><span class="field__label">Analysis quality</span>
+          <select id="opt-quality" class="field__input field__select"><option value="320">Low (320 px)</option><option value="480">Medium (480 px)</option><option value="960">High (960 px)</option><option value="1920">Maximum (1920 px)</option></select></label>
+        <label class="field field--row"><span class="field__label">Units</span>
+          <select id="opt-units" class="field__input field__select"><option value="pct">Percent</option><option value="8bit">8-bit (0–255)</option><option value="10bit">10-bit (0–1023)</option><option value="float">Float (0–1)</option></select></label>
+        <label class="field field--row"><span class="field__label">Vectorscope zoom</span>
+          <select id="opt-vzoom" class="field__input field__select"><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option><option value="4">4×</option></select></label>
+        <label class="field field--row"><span class="field__label">Trace intensity</span>
+          <input id="opt-intensity" type="range" min="0.3" max="3" step="0.05" value="1" /></label>
+        <label class="field field--row"><span class="field__label">Colour vectorscope trace</span>
+          <input id="opt-colortrace" class="check" type="checkbox" /></label>
+        <label class="field field--row"><span class="field__label">Histogram: log scale</span>
+          <input id="opt-histlog" class="check" type="checkbox" /></label>
+        <label class="field field--row"><span class="field__label">Information bar</span>
+          <select id="opt-info" class="field__input field__select"><option value="full">Full</option><option value="compact">Compact</option><option value="off">Off</option></select></label>
+        <label class="field field--row"><span class="field__label">Zebra highlight (%)</span>
+          <input id="opt-zebra" type="range" min="80" max="100" step="1" value="95" /></label>
+
+      </div>
+      <footer class="modal__footer"><button type="button" class="btn btn--primary" data-action="modal-close"><span class="btn__label">Done</span></button></footer>
+    </div>
+  </div>
+
+  <script src="js/CSInterface.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/color.js"></script>
+  <script src="js/png.js"></script>
+  <script src="js/view.js"></script>
+  <script src="js/analyze.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/capture.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
